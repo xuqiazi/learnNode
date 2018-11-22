@@ -1,0 +1,15 @@
+{
+  "name": "learnnode",
+  "version": "1.0.0",
+  "description": "It's for learn node",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "sikyrae",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemo": "^1.0.0"
+  }
+}

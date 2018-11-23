@@ -43,7 +43,6 @@ function indexController(req, res, pathname) {
      function deleteBlog(id) {
         var xhr = new XMLHttpRequest();
         var parent=document.getElementById("olList");
-        
         var child = document.getElementById('list-'+id);
         parent.removeChild(child);
         // xhr.open('GET', '/delete?id='+id);
@@ -166,7 +165,6 @@ let uniqId = 0;
 async function submitBlog(req, res, blog) {
   // 获取请求数据
   const datas = await getDataFromReq(req);
-
   if (blog && blog.id) {
     // 有 id ，说明是更新博文
     blog.title = datas.title;
@@ -180,7 +178,6 @@ async function submitBlog(req, res, blog) {
     };
     data.push(blog);
   }
-
   // 这里的 content-type 就是写 json 的 mime
   res.writeHead(200, { 'content-type': 'application/json;charset=utf-8' });
   res.end(JSON.stringify({ id: blog.id }));

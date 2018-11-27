@@ -10,6 +10,7 @@
   "author": "sikyrae",
   "license": "ISC",
   "devDependencies": {
+    "jest": "^23.6.0",
     "nodemo": "^1.0.0"
   }
 }

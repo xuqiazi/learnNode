@@ -17,6 +17,8 @@ const server = http.createServer(function(req, res) {
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(pathname.substring(1));
 });
+
+
 server.listen(port, hostname, () => {
   console.log(`服务器运行在http://${hostname}:${port}`);
 });

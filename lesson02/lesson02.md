@@ -76,3 +76,8 @@ JSON.stringify() 方法是将一个JavaScript值(对象或者数组)转换为一
 
 `JSON.parse(text[, reviver])`
 JSON.parse() 方法用来解析JSON字符串，构造由字符串描述的JavaScript值或对象。提供可选的reviver函数用以在返回之前对所得到的对象执行变换(操作)。
+
+
+## url.parse() url 解析函数
+
+The url.parse() method takes a URL string, parses it, and returns a URL object.

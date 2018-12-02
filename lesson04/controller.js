@@ -1,8 +1,9 @@
 const { template } = require('./template');
-// const fs = require('fs');
+const fs = require('fs');
 const data = require('./blog.json');
 const accounts = require('./account.json');
 const { redirect } = require('./redirect');
+const path = require('path');
 const sessionStore = {};
 const entityMap = {
   '&': '&amp;',
@@ -252,34 +253,31 @@ function reginsterJson(ctx) {
     ctx.body = '用户名已存在';
     redirect(ctx, '/register');
   } else {
-    const sessionId = `${Date.now()}${Math.round((Math.random() * 999 * 100))}`;
-    accounts.push({
-      username,
-      nickname,
-      password,
-      accountId: sessionId,
+    // const sessionId = `${Date.now()}${Math.round((Math.random() * 999 * 100))}`;
+    const url = path.resolve(__dirname, 'account.json');
+    fs.readFile(url, (err, data) => {
+      if (err) throw err;
+      const accountData = JSON.parse(data.toString());
+      // console.log(accountData.length);
+      const accountId = ((accountData.length) + 1).toString();
+      accountData.push({
+        username,
+        nickname,
+        password,
+        accountId,
+      });
+      const str = JSON.stringify(accountData);
+      fs.writeFile(url, str, function(err) {
+        if (err) {
+          console.error(err);
+        }
+        console.log('注册成功');
+      });
     });
     redirect(ctx, '/');
   }
-  // fs.readFile('./account.json', function(err, data) {
-  // if () {
-  //   return console.error(err);
-  // }
-  // const blog = data.toString();
-  // for (let i = 0; i < blog.length; i++) {
-  //   if (id === blog[i].id) {
-  //     blog.splice(i, 1);
-  //   }
-  // }
-  // fs.writeFile('./blog.json', str, function(err) {
-  //   if (err) {
-  //     console.error(err);
-  //   }
-  //   console.log('注册成功');
-  // });
-  // });
-
 }
+
 function registerController(ctx) {
   reginsterJson(ctx);
 }

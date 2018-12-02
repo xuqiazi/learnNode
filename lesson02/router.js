@@ -16,7 +16,7 @@ const entityMap = {
   "'": '&#39;',
   '/': '&#x2F;',
   '`': '&#x60;',
-  '=': '&#x3D;'
+  '=': '&#x3D;',
 };
 
 function escapeHtml(str) {
@@ -30,10 +30,10 @@ function getIdFromPathname(pathname) {
 // 404controller
 function notFoundController(req, res) {
   res.writeHead('404');
-  res.end(`404 is not found`);
+  res.end('404 is not found');
 }
 // indexController
-function indexController(req, res, pathname) {
+function indexController(req, res) {
   okHeader(res);
   const title = '<h1>这是斯琪的博客列表</h1>';
   const header = '博客列表页';
@@ -61,7 +61,7 @@ function indexController(req, res, pathname) {
     const html =
       script +
       title +
-      `<ol id="olList">` +
+      '<ol id="olList">' +
       data
         .map(data => {
           const listHtml = `<a href='/detail/${data.id}' target='_blank'>${
@@ -78,7 +78,7 @@ function indexController(req, res, pathname) {
           }">${listHtml}&nbsp;&nbsp;${editHtml}&nbsp;&nbsp;${deleteHtml}</li>`;
         })
         .join('') +
-      `</ol>`;
+      '</ol>';
     res.write(template(header, html));
   } else {
     res.write(template(header, `${title}<p>暂无博客</p>`));
@@ -126,11 +126,11 @@ function showEditPage(req, res, blog) {
       </script>
   
       <p>标题：<input id="title" type="text" placeholder="输入博客标题" value="${
-        blog ? blog.title : ''
-      }"></p>
+  blog ? blog.title : ''
+}"></p>
       <p>内容：<textarea id="content" placeholder="输入内容">${
-        blog ? blog.content : ''
-      }</textarea></p>
+  blog ? blog.content : ''
+}</textarea></p>
       <p><button onclick="submitBlog()">提交数据</button></p>
     `);
 }
@@ -174,7 +174,7 @@ async function submitBlog(req, res, blog) {
     blog = {
       id: `${Date.now()}${uniqId++}`, // 以时间戳作为 id
       title: datas.title,
-      content: datas.content
+      content: datas.content,
     };
     data.push(blog);
   }
@@ -198,22 +198,23 @@ function editController(req, res, pathname) {
   // 其他情况全部 404
   notFoundController(req, res);
 }
+
 function deleteJson(id) {
   fs.readFile('./blog.json', function(err, data) {
     if (err) {
       return console.error(err);
     }
-    const blog = eval(data.toString());
-    console.log(blog);
-    //把数据读出来删除
-    for (var i = 0; i < blog.length; i++) {
+    const blog = data.toString();
+    console.log('斯琪测试', blog);
+    // 把数据读出来删除
+    for (let i = 0; i < blog.length; i++) {
       if (id === blog[i].id) {
         blog.splice(i, 1);
       }
     }
     const str = JSON.stringify(blog);
     console.log(str);
-    //然后再把数据写进去
+    // 然后再把数据写进去
     fs.writeFile('./blog.json', str, function(err) {
       if (err) {
         console.error(err);
@@ -240,7 +241,7 @@ async function postDeletePage(req, res) {
   res.writeHead(200, { 'content-type': 'application/json;charset=utf-8' });
   res.end('删除成功');
 }
-function deleteController(req, res, pathname) {
+function deleteController(req, res) {
   const id = require('querystring').parse(url.parse(req.url).query).id;
   const blog = id && data.find(blog => blog.id === id);
   if (req.method === 'GET') {

@@ -1,5 +1,5 @@
-function template(title,content) {
-    const body =
+function template(title, content) {
+  const body =
       `<html>
       <head>
       <meta charset="UTF-8">
@@ -10,8 +10,8 @@ function template(title,content) {
       ${content}
       </body>
       </html>`;
-    return body;
-  }
+  return body;
+}
 
 
-exports.template=template;
+exports.template = template;

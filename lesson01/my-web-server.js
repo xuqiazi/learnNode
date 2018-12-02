@@ -1,6 +1,6 @@
-const http = require('http'); //获取http
-const hostname = '127.0.0.1'; //设置host
-const port = 3000; //设置端口号
+const http = require('http'); // 获取http
+const hostname = '127.0.0.1'; // 设置host
+const port = 3000; // 设置端口号
 const url = require('url');
 
 // 普通的http请求，包括请求头状态码，输入等

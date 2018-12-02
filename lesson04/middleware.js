@@ -1,12 +1,40 @@
 const stream = require('stream');
 const { router } = require('./router');
 const url = require('url');
+const accounts = require('./account.json');
+const querystring = require('querystring');
 const {
   indexController,
   detailController,
   showEditPage,
   submitBlog,
+  loginController,
+  loginPageController,
+  registerController,
+  registerPageController,
+  sessionStore,
 } = require('./controller');
+// 实现getCookie方法
+function getCookie(ctx, key) {
+  if (!ctx.cookie) {
+    ctx.cookie = {};
+    const cookieStr = ctx.req.headers.cookie || '';
+    // 匹配__session_id__=154339717784636451
+    cookieStr.replace(/([\w\.]+)=([^;]+)(?:;|$)/g, (_, key, value) => {
+      ctx.cookie[key] = value;
+    });
+  }
+  return ctx.cookie[key];
+}
+// 重定向
+function redirect(ctx, url) {
+  // 设置重定向响应码
+  ctx.status = 302;
+  // JS 中重定向的设置 https://en.wikipedia.org/wiki/Server-side_redirect
+  ctx.res.setHeader('Location', url);
+  // url = escapeHtml(url);
+  ctx.body = `Redirecting to <a href="${url}">${url}</a>`;
+}
 // 实现中间件
 // 洋葱式中间件的原理是，层层进入，再层层出去，这样子可以避免在上一节课里面进入到controller 里面还要写if else 来判断404响应。
 // 让controller 专注于展示内容，某些响应的404内容就可以。还比如一些获取数据的部分，如果获取到的数据是不符合要求的，那又要抛出404
@@ -45,20 +73,22 @@ const app = {
 
 // 博客首页，接收 get 请求
 router.get('/', indexController);
-
 // 博客详情，接收 get 请求
 router.get('/detail/:id', detailController);
-
 // 博客编辑页面请求
 router.get('/edit(/:id)?', showEditPage);
-
 // 博客编辑数据提交
 router.post('/edit(/:id)?', submitBlog);
-
+router.get('/login', loginPageController);
+router.post('/login', loginController);
+router.get('/register', registerPageController);
+router.post('/register', registerController);
+// router.get('/logout', logoutController);
 // // 配置中间件
 app.use(startHandle); // 请求开始
 app.use(errorHandle); // 错误处理
 app.use(dataHandle); // 请求/响应数据处理
+app.use(accountHandle); // 登录态中间件
 app.use(router.handle.bind(router)); // 路由功能
 
 // 开始撰写中间件，需要撰写的中间件分为四层，第一层和最后一层是请求处理，
@@ -123,7 +153,36 @@ async function errorHandle(ctx, next) {
     ctx.body = e.message;
   });
 }
+// 账户处理中间件
+async function accountHandle(ctx, next) {
+  // 从getCookie 中获得定义好的sessionID
+  const sessionId = getCookie(ctx, '__session_id__');
+  // const sessinoId=null;
+  // 拿到sessionId
+  // console.log('direct', sessionId);
+  const sessionInfo = sessionId && sessionStore[sessionId];
 
+  // console.log(sessionStore[sessionId]);
+  // 拿到将sessionId 里面的 accountId和accounts 里面的用户Id对应上
+  const userInfo =
+    sessionInfo &&
+    accounts.find(user => user.accountId === sessionInfo.accountId);
+  console.log(userInfo);
+  if (!userInfo) {
+    if (ctx.pathname !== '/login') {
+      if (ctx.pathname !== '/register') {
+        return redirect(ctx, '/login');
+      }
+    }
+  }
+
+  ctx.userInfo = {
+    ...userInfo,
+    sessionId,
+  };
+
+  await next();
+}
 // 数据处理
 async function getDataFromReq(req) {
   let len = 0;
@@ -142,15 +201,26 @@ async function getDataFromReq(req) {
     req.on('end', () => {
       // 将收集的数据 buffer 组合成一个完整的 buffer ，然后通过 toString 将 buffer 转成字符串
       const plainText = Buffer.concat(chunks, len).toString();
-
       // 将数据返回
-      resolve(JSON.parse(plainText));
+      resolve(plainText);
     })
-  );
+  ).then(text => {
+    // 获取contentType
+    const contentType = req.headers['content-type'];
+    if (contentType.startsWith('application/x-www-form-urlencoded')) {
+      // console.log(querystring.parse(text));
+      return querystring.parse(text);
+    } else if (contentType.startsWith('application/json')) {
+      return JSON.parse(text);
+    }
+    return text;
+
+  });
 }
 
 async function dataHandle(ctx, next) {
-  ctx.requestBody = ctx.req === 'POST' ? await getDataFromReq(ctx.req) : {};
+  ctx.requestBody =
+    ctx.req.method === 'POST' ? await getDataFromReq(ctx.req) : {};
   await next();
 }
 

@@ -1,5 +1,19 @@
 const { template } = require('./template');
-const data =require('./blog.json');
+const data = require('./blog.json');
+const entityMap = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '/': '&#x2F;',
+  '`': '&#x60;',
+  '=': '&#x3D;',
+};
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"'`=\/]/g, s => entityMap[s]);
+}
 // indexController
 function indexController(ctx) {
   console.log('已经进来拉');
@@ -29,7 +43,7 @@ function indexController(ctx) {
     const html =
       script +
       title +
-      `<ol id="olList">` +
+      '<ol id="olList">' +
       data
         .map(data => {
           const listHtml = `<a href='/detail/${data.id}' target='_blank'>${
@@ -46,7 +60,7 @@ function indexController(ctx) {
           }">${listHtml}&nbsp;&nbsp;${editHtml}&nbsp;&nbsp;${deleteHtml}</li>`;
         })
         .join('') +
-      `</ol><a href="/edit">添加博客</a>`;
+      '</ol><a href="/edit">添加博客</a>';
     ctx.body += template(header, html);
   } else {
     ctx.body += template(header, `${title}<p>暂无博客</p><a href="/edit">添加博客</a>`);
@@ -59,10 +73,10 @@ function indexController(ctx) {
 function detailController(ctx) {
   const id = ctx.params.id;
   const blog = id && data.find(blog => blog.id === id);
-  const header=`${blog.title}`;
-  const html =`<h1>${escapeHtml(blog.title)}</h1>${escapeHtml(blog.content)}`;
+  const header = `${blog.title}`;
+  const html = `<h1>${escapeHtml(blog.title)}</h1>${escapeHtml(blog.content)}`;
   if (blog) {
-    ctx.body += template(header,html);
+    ctx.body += template(header, html);
   }
 }
 // 博客编辑接口
@@ -81,20 +95,20 @@ async function submitBlog(ctx) {
     blog = {
       id: `${Date.now()}${uniqId++}`, // 以时间戳作为 id
       title: datas.title,
-      content: datas.content
+      content: datas.content,
     };
     data.push(blog);
   }
   // 这里的 content-type 就是写 json 的 mime
   ctx.type = 'json';
-  ctx.body ={ id: blog.id };
+  ctx.body = { id: blog.id };
 }
 
 function showEditPage(ctx) {
   const id = ctx.params.id;
-  let blog = id && data.find(blog => blog.id === id);
-  const header='博客编辑页';
-  const html=`
+  const blog = id && data.find(blog => blog.id === id);
+  const header = '博客编辑页';
+  const html = `
   <script>
     function submitBlog() {
       var title = document.getElementById('title');
@@ -119,17 +133,17 @@ function showEditPage(ctx) {
   </script>
 
   <p>标题：<input id="title" type="text" placeholder="输入博客标题" value="${
-    blog ? blog.title : ''
-  }"></p>
+  blog ? blog.title : ''
+}"></p>
   <p>内容：<textarea id="content" placeholder="输入内容">${
-    blog ? blog.content : ''
-  }</textarea></p>
+  blog ? blog.content : ''
+}</textarea></p>
   <p><button onclick="submitBlog()">提交数据</button></p>
-`
-  ctx.body+=template(header,html);
+`;
+  ctx.body += template(header, html);
 }
 
-exports.indexController=indexController;
-exports.detailController=detailController;
-exports.showEditPage=showEditPage;
-exports.showEditPage=showEditPage;
+exports.indexController = indexController;
+exports.detailController = detailController;
+exports.showEditPage = showEditPage;
+exports.submitBlog = submitBlog;

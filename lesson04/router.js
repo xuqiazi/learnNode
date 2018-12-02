@@ -1,3 +1,4 @@
+
 // 第一步 路由规则
 
 // pathToRegexp(rules);
@@ -63,9 +64,9 @@ class Router {
       // console.log(this.rules[i]);
       // 当请求类型匹配(请求类型在存储好的构造函数属性里面)，同时能匹配上路由规则的时候才继续
       //   const result = methods.includes(ctx.method)&& ruleRE.exec(pathname);
-      console.log(ctx.method, ruleRE.exec(pathname));
+      // console.log(ctx.method, ruleRE.exec(pathname));
       const result = methods.includes(ctx.method) && ruleRE.exec(pathname);
-      console.log(result);
+      // console.log(result);
       if (!result) {
         continue;
       }
@@ -77,7 +78,7 @@ class Router {
         //   id=123
       });
       ctx.params = params;
-      console.log(ctx);
+      // console.log(ctx);
       // 调用保存的 controller ，然后退出循环
       // console.log('controller',controller(ctx));
       await controller(ctx);

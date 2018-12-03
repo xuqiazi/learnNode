@@ -250,18 +250,27 @@ function loginController(ctx) {
 }
 
 function registerController(ctx) {
-  const { username, nickname, password } = ctx.requestBody;
+  const { username } = ctx.requestBody;
   const user = accounts.find(account => account.username === username);
   if (user) {
     ctx.body = '用户名已存在';
     redirect(ctx, '/register');
   } else {
-    // const sessionId = `${Date.now()}${Math.round((Math.random() * 999 * 100))}`;
-    const url = path.resolve(__dirname, 'account.json');
+    handleRegister(ctx);
+  }
+}
+
+async function handleRegister(ctx) {
+  await registerWriteFile(ctx);
+  redirect(ctx, '/');
+}
+async function registerReadFile(ctx) {
+  const url = path.resolve(__dirname, 'account.json');
+  const { username, nickname, password } = ctx.requestBody;
+  const Data = await new Promise((resolve, reject) => {
     fs.readFile(url, (err, data) => {
-      if (err) throw err;
+      if (err) { reject(err); }
       const accountData = JSON.parse(data.toString());
-      // console.log(accountData.length);
       const accountId = (accountData.length + 1).toString();
       accountData.push({
         username,
@@ -269,16 +278,23 @@ function registerController(ctx) {
         password,
         accountId,
       });
-      const str = JSON.stringify(accountData);
-      fs.writeFile(url, str, function(err) {
-        if (err) {
-          console.error(err);
-        }
-        console.log('注册成功');
-      });
+      resolve(accountData);
     });
-    redirect(ctx, '/');
-  }
+  });
+  return Data;
+}
+async function registerWriteFile(ctx) {
+  const accountData = await registerReadFile(ctx);
+  const str = JSON.stringify(accountData);
+  const url = path.resolve(__dirname, 'account.json');
+  await new Promise((resolve, reject) => {
+    fs.writeFile(url, str, function(err) {
+      if (err) {
+        reject(err);
+      }
+      console.log('注册成功');
+    });
+  });
 }
 function deleteJson(id) {
   const url = path.resolve(__dirname, 'blog.json');

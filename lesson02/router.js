@@ -111,6 +111,7 @@ function showEditPage(req, res, blog) {
           // 发个异步请求
           var xhr = new XMLHttpRequest();
           xhr.open('POST', '/edit${blog ? `/${blog.id}` : ''}');
+          xhr.setRequestHeader('Content-Type', 'application/json');
           xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
               var resp = JSON.parse(xhr.responseText);

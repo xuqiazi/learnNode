@@ -21,8 +21,8 @@ function escapeHtml(str) {
 }
 // indexController
 function indexController(ctx) {
-  const title = '<h1>这是斯琪的博客列表</h1>';
-  const header = '博客列表页';
+  const title = '<h1>博文列表页</h1>';
+  const header = '博文列表页';
   if (data.length) {
     const script = `
        <script>
@@ -33,6 +33,7 @@ function indexController(ctx) {
           parent.removeChild(child);
           // xhr.open('GET', '/delete?id='+id);
           xhr.open('POST', '/delete');
+          xhr.setRequestHeader('Content-Type', 'application/json');
           xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
               // var resp = xhr.responseText;
@@ -44,16 +45,16 @@ function indexController(ctx) {
         }
        </script>
       `;
-    // const author = accounts.find(account=>account.accountId===data.accountId);
-
     const html =
       script +
       title +
       '<ol id="olList">' +
       data
         .map(data => {
-          const author = accounts.find(account => account.accountId === data.accountId);
-          console.log(accounts, author);
+          const author = accounts.find(
+            account => account.accountId === data.accountId
+          );
+          // console.log(accounts, author);
           const listHtml = `<a href='/detail/${
             data.id
           }' target='_blank'>${escapeHtml(data.title)}作者：${escapeHtml(
@@ -64,10 +65,9 @@ function indexController(ctx) {
               ? `<a href='/edit/${data.id}' target='_blank'>编辑</a>`
               : '';
           const deleteHtml =
-          data.accountId === ctx.userInfo.accountId
-            ? `<button onclick="deleteBlog(${
-              data.id
-            })">删除</button>` : '';
+            data.accountId === ctx.userInfo.accountId
+              ? `<button onclick="deleteBlog(${data.id})">删除</button>`
+              : '';
           return `<li id="list-${
             data.id
           }">${listHtml}&nbsp;&nbsp;${editHtml}&nbsp;&nbsp;${deleteHtml}</li>`;
@@ -99,7 +99,7 @@ function detailController(ctx) {
 }
 // 博客编辑接口
 let uniqId = 0;
-async function submitBlog(ctx) {
+function submitBlog(ctx) {
   // 获取请求数据
   const datas = ctx.requestBody;
   const id = ctx.params.id;
@@ -108,6 +108,7 @@ async function submitBlog(ctx) {
     return;
   }
   if (blog && blog.id) {
+    console.log(datas.title, datas.content);
     // 有 id ，说明是更新博文
     blog.title = datas.title;
     blog.content = datas.content;
@@ -139,16 +140,17 @@ function showEditPage(ctx) {
       var title = document.getElementById('title');
       var content = document.getElementById('content');
       if (!title || !content) return alert('数据不能为空');
-
+      console.log(title.value,content.value);
       // 发个异步请求
       var xhr = new XMLHttpRequest();
       xhr.open('POST', '/edit${blog ? `/${blog.id}` : ''}');
+      xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
           var resp = JSON.parse(xhr.responseText);
 
           // 提交完成，跳转到详情页
-          if (resp.id) location.href = '/detail/' + resp.id;
+           if (resp.id) location.href = '/detail/' + resp.id;
         }
       };
 
@@ -227,7 +229,7 @@ function loginController(ctx) {
     ctx.body = '用户名或密码错误';
     return;
   }
-  const sessionId = `${Date.now()}${Number((Math.random() * 99999 * 10000))}`;
+  const sessionId = `${Date.now()}${Number(Math.random() * 99999 * 10000)}`;
 
   Object.keys(sessionStore).forEach(k => {
     if (sessionStore[k].accountId === user.accountId) {
@@ -238,7 +240,7 @@ function loginController(ctx) {
     accountId: user.accountId,
     createTime: Date.now(),
   };
-  console.log('hellosiky', sessionStore);
+  // console.log('hellosiky', sessionStore);
   const oneDay = 24 * 60 * 60 * 10000;
   setCookie(ctx, '__session_id__', sessionId, {
     expires: new Date(Date.now() + oneDay).toUTCString(),
@@ -246,7 +248,8 @@ function loginController(ctx) {
   });
   redirect(ctx, '/');
 }
-function reginsterJson(ctx) {
+
+function registerController(ctx) {
   const { username, nickname, password } = ctx.requestBody;
   const user = accounts.find(account => account.username === username);
   if (user) {
@@ -259,7 +262,7 @@ function reginsterJson(ctx) {
       if (err) throw err;
       const accountData = JSON.parse(data.toString());
       // console.log(accountData.length);
-      const accountId = ((accountData.length) + 1).toString();
+      const accountId = (accountData.length + 1).toString();
       accountData.push({
         username,
         nickname,
@@ -277,9 +280,38 @@ function reginsterJson(ctx) {
     redirect(ctx, '/');
   }
 }
+function deleteJson(id) {
+  const url = path.resolve(__dirname, 'blog.json');
+  fs.readFile(url, function(err, data) {
+    if (err) {
+      return console.error(err);
+    }
 
-function registerController(ctx) {
-  reginsterJson(ctx);
+    const blog = JSON.parse(data.toString());
+    const blogId = id.toString();
+    // 把数据读出来删除
+    for (let i = 0; i < blog.length; i++) {
+      if (blogId === blog[i].id) {
+        blog.splice(i, 1);
+        break;
+      }
+    }
+    const str = JSON.stringify(blog);
+    // 然后再把数据写进去
+    fs.writeFile(url, str, function(err) {
+      if (err) {
+        console.error(err);
+      }
+      console.log('删除成功');
+    });
+  });
+}
+function deleteController(ctx) {
+  const datas = ctx.requestBody;
+  if (datas && datas.id) {
+    deleteJson(datas.id);
+    ctx.status = '200';
+  }
 }
 exports.indexController = indexController;
 exports.detailController = detailController;
@@ -291,3 +323,4 @@ exports.loginPageController = loginPageController;
 exports.registerController = registerController;
 exports.registerPageController = registerPageController;
 exports.sessionStore = sessionStore;
+exports.deleteController = deleteController;

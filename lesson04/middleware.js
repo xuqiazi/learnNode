@@ -13,6 +13,7 @@ const {
   registerController,
   registerPageController,
   sessionStore,
+  deleteController,
 } = require('./controller');
 // 实现getCookie方法
 function getCookie(ctx, key) {
@@ -73,6 +74,8 @@ const app = {
 
 // 博客首页，接收 get 请求
 router.get('/', indexController);
+// 博客首页，接收post
+router.post('/delete', deleteController);
 // 博客详情，接收 get 请求
 router.get('/detail/:id', detailController);
 // 博客编辑页面请求
@@ -95,7 +98,6 @@ app.use(router.handle.bind(router)); // 路由功能
 // 第二层和倒数第二层为404异常处理
 // 第三层和倒数第三层为处理客户端提交的数据表单
 // 最后一层为controller
-
 async function startHandle(ctx, next) {
   const startTime = Date.now();
   ctx.status = null; // 用于记录响应码
@@ -138,7 +140,7 @@ async function startHandle(ctx, next) {
     ctx.res.end(body || String(ctx.status));
   }
   console.info(
-    `request ${ctx.pathname} ${ctx.status}, cost ${Date.now() - startTime}ms`
+    `request ${ctx.pathname} ${ctx.status} ${ctx.method}, cost ${Date.now() - startTime}ms`
   );
   // 打印 accesslog
 }
@@ -167,7 +169,7 @@ async function accountHandle(ctx, next) {
   const userInfo =
     sessionInfo &&
     accounts.find(user => user.accountId === sessionInfo.accountId);
-  console.log(userInfo);
+  // console.log(userInfo);
   if (!userInfo) {
     if (ctx.pathname !== '/login') {
       if (ctx.pathname !== '/register') {
@@ -214,7 +216,6 @@ async function getDataFromReq(req) {
       return JSON.parse(text);
     }
     return text;
-
   });
 }
 

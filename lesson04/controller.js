@@ -203,11 +203,8 @@ function registerPageController(ctx) {
       xhr.onreadystatechange = function() {
         if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
           const resp = JSON.parse(xhr.responseText);
-          console.log(resp.code);
-          if (resp.code === 500) {
-            exitTips[0].innerHTML = '用户名已存在,请重新输入';
-          } else if (resp.code === 200) {
-            exitTips[0].innerHTML = '注册成功，现为你跳转登录页';
+          exitTips[0].innerHTML = resp.msg;
+         if (resp.code === 20000) {
             location.href = '/login';
           }
         }
@@ -296,13 +293,21 @@ function loginController(ctx) {
 async function registerController(ctx) {
   const { username } = ctx.requestBody;
   const user = accounts.find(account => account.username === username);
-  let code;
+  let code,
+    msg;
   if (user) {
-    code = 500;
+    code = 50000;
+    msg = '用户名已存在,请重新输入';
   } else {
-    code = await registerWriteFile(ctx);
+    if (await registerWriteFile(ctx)) {
+      code = 20000;
+      msg = '注册成功，现为你跳转登录页';
+    } else {
+      code = 40000;
+      msg = '注册失败';
+    }
   }
-  ctx.body = { code };
+  ctx.body = { code, msg };
 }
 async function registerReadFile(ctx) {
   const url = path.resolve(__dirname, 'account.json');
@@ -327,15 +332,12 @@ async function registerWriteFile(ctx) {
   const accountData = await registerReadFile(ctx);
   const str = JSON.stringify(accountData);
   const url = path.resolve(__dirname, 'account.json');
-  let status;
   const satusTime = await new Promise((resolve, reject) => {
     fs.writeFile(url, str, function(err) {
       if (err) {
-        status = 404;
         reject(err);
       }
-      status = 200;
-      resolve(status);
+      resolve(true);
     });
   });
   return satusTime;

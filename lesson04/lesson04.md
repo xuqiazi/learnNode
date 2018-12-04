@@ -36,3 +36,8 @@
 
 5，同时将新的sessionId 种到cookie 中
 
+## 注册逻辑
+
+1，增加路由规则，增加注册逻辑，并在accountHandle 里面做注册处理
+
+2，

@@ -183,13 +183,58 @@ function loginPageController(ctx) {
 }
 function registerPageController(ctx) {
   const header = '注册页';
-  const body = `
-    <form action="/register" method="post">
-      <p><label>用户名</label><input type="text" name="username" placeholder="请输入用户名"/></p>
-      <p><label>昵称</label><input type="text" name="nickname" placeholder="请输入昵称"/></p>
-      <p><label>密码</label><input type="password" name="password" placeholder="请输入密码"/></p>
-      <p><button type="submit">注册</button></p>
-      </form>
+  const script = `
+  <script>
+  function register() {
+    const xhr = new XMLHttpRequest();
+    const username = document.getElementById('username');
+    const nickname = document.getElementById('nickname');
+    const password = document.getElementById('password');
+    const exitTips = document.getElementsByTagName('span');
+    const p = document.getElementsByTagName('p');
+    const showtips = function(ele) {
+      if (!ele.childNodes[1].value) {
+        ele.childNodes[2].style.cssText = 'visibility:visible;';
+      }
+    };
+    if (username && nickname && password) {
+      xhr.open('POST', '/register');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+          const resp = JSON.parse(xhr.responseText);
+          console.log(resp.code);
+          if (resp.code === 500) {
+            exitTips[0].innerHTML = '用户名已存在,请重新输入';
+          } else if (resp.code === 200) {
+            exitTips[0].innerHTML = '注册成功，现为你跳转登录页';
+            location.href = '/login';
+          }
+        }
+      };
+      xhr.send(
+        JSON.stringify({
+          username: username.value,
+          nickname: nickname.value,
+          password: password.value,
+        })
+      );
+    } else {
+      for (let i = 0; i < p.length; i++) {
+        new showtips(p[i]);
+      }
+    }
+  }
+  
+  </script>
+ `;
+  const body = script + `
+      <style>i{visibility:hidden;}</style>
+      <p class="username"><label>用户名</label><input type="text" name="username" placeholder="请输入用户名" id="username"/><i>用户名不能为空</i></p>
+      <p class="nikename"><label>昵称</label><input type="text" name="nickname" placeholder="请输入昵称" id="nickname"/><i>昵称不能为空</i></p>
+      <p class="password"><label>密码</label><input type="password" name="password" placeholder="请输入密码" id="password"/><i>密码不能为空</i></p>
+      <span></span></br>
+      <button onclick="register()">注册</button>
   `;
   ctx.body = template(header, body);
 }
@@ -240,7 +285,6 @@ function loginController(ctx) {
     accountId: user.accountId,
     createTime: Date.now(),
   };
-  // console.log('hellosiky', sessionStore);
   const oneDay = 24 * 60 * 60 * 10000;
   setCookie(ctx, '__session_id__', sessionId, {
     expires: new Date(Date.now() + oneDay).toUTCString(),
@@ -249,20 +293,19 @@ function loginController(ctx) {
   redirect(ctx, '/');
 }
 
-function registerController(ctx) {
+async function registerController(ctx) {
   const { username } = ctx.requestBody;
   const user = accounts.find(account => account.username === username);
+  let code;
   if (user) {
-    ctx.body = '用户名已存在';
-    redirect(ctx, '/register');
+    code = 500;
   } else {
-    handleRegister(ctx);
+    code = await registerWriteFile(ctx);
   }
-}
-
-async function handleRegister(ctx) {
-  await registerWriteFile(ctx);
-  redirect(ctx, '/');
+  const data = {
+    code: `${code}`,
+  };
+  ctx.body = data;
 }
 async function registerReadFile(ctx) {
   const url = path.resolve(__dirname, 'account.json');
@@ -287,14 +330,18 @@ async function registerWriteFile(ctx) {
   const accountData = await registerReadFile(ctx);
   const str = JSON.stringify(accountData);
   const url = path.resolve(__dirname, 'account.json');
-  await new Promise((resolve, reject) => {
+  let status;
+  const satusTime = await new Promise((resolve, reject) => {
     fs.writeFile(url, str, function(err) {
       if (err) {
+        status = 404;
         reject(err);
       }
-      console.log('注册成功');
+      status = 200;
+      resolve(status);
     });
   });
+  return satusTime;
 }
 function deleteJson(id) {
   const url = path.resolve(__dirname, 'blog.json');

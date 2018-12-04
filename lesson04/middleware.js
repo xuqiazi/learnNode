@@ -105,6 +105,7 @@ async function startHandle(ctx, next) {
   ctx.method = ctx.req.method.toLowerCase(); // method 转成小写
   ctx.pathname = url.parse(ctx.req.url).pathname; // 给上下文对象添加个 pathname 的属性
   ctx.type = 'html'; // 响应类型，默认为 html，但由于有的响应为json，所以增加不同的响应类型
+  ctx.code = null;
   const mines = {
     html: 'text/html',
     json: 'application/json',
@@ -137,7 +138,12 @@ async function startHandle(ctx, next) {
       body = '';
       console.error(e);
     }
+    // if (ctx.code) {
+    //   ctx.res.end(String(ctx.code));
+    // } else {
     ctx.res.end(body || String(ctx.status));
+    // }
+
   }
   console.info(
     `request ${ctx.pathname} ${ctx.status} ${ctx.method}, cost ${Date.now() - startTime}ms`

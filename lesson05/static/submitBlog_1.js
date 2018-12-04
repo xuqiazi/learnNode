@@ -24,3 +24,42 @@ const submitBlog = function() {
 const button = document.getElementsByTagName('button');
 
 button.bind(submitBlog());
+function register() {
+  const xhr = new XMLHttpRequest();
+  const username = document.getElementById('username');
+  const nickname = document.getElementById('nickname');
+  const password = document.getElementById('password');
+  const exitTips = document.getElementsByTagName('span');
+  const p = document.getElementsByTagName('p');
+  const showtips = function(ele) {
+    if (!ele.childNodes[1].value) {
+      ele.childNodes[2].style.cssText = 'visibility:visible;';
+    }
+  };
+  if (username && nickname && password) {
+    xhr.open('POST', '/register');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+        const resp = JSON.parse(xhr.responseText);
+        if (resp === 500) {
+          exitTips[0].innerHTML = '用户名已存在,请重新输入';
+        } else if (resp === 200) {
+          exitTips[0].innerHTML = '注册成功，现为你跳转登录页';
+          location.href = '/login';
+        }
+      }
+    };
+    xhr.send(
+      JSON.stringify({
+        username: username.value,
+        nickname: nickname.value,
+        password: password.value,
+      })
+    );
+  } else {
+    for (let i = 0; i < p.length; i++) {
+      new showtips(p[i]);
+    }
+  }
+}

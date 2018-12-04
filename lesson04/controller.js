@@ -302,10 +302,7 @@ async function registerController(ctx) {
   } else {
     code = await registerWriteFile(ctx);
   }
-  const data = {
-    code: `${code}`,
-  };
-  ctx.body = data;
+  ctx.body = { code };
 }
 async function registerReadFile(ctx) {
   const url = path.resolve(__dirname, 'account.json');

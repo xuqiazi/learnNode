@@ -8,5 +8,9 @@
       "es6": true,
       "browser": true,
       "jest": true
+    },
+    "rules": {
+      "no-bitwise":"off"
     }
+  
   }

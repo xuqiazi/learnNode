@@ -8,7 +8,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/lesson04/server"
+            "program": "${workspaceFolder}/lesson05/server"
         }
     ]
 }

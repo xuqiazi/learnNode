@@ -13,7 +13,7 @@
     "eslint": "^5.9.0",
     "eslint-config-egg": "^7.1.0",
     "jest": "^23.6.0",
-    "nodemo": "^1.0.0",
+    "nodemon": "^1.18.9",
     "supertest": "^3.3.0"
   }
 }

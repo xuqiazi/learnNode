@@ -24,8 +24,12 @@
 
     4，另外一个是if-modified-since请求头的时间是否大于文件最后一次修改的时间。
 
-    5，根据if-modified-since 以及 if-none-match 的判断 设置资源请求是否为304
+    5，根据if-modified-since 以及 if-none-match 的判断 设置资源请求是否为304。
 
-    6， 
+    6，若资源已过期，则重新设置last-modified 以及Etag Cache-Control的max-age值
+
     
 ## 大文件处理
+
+    判断请求头里面的accept-encoding的编码是否包含gzip，若包含，则通过的node的zlib 进行资源压缩
+    

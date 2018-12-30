@@ -201,14 +201,14 @@ async function staticCache(ctx, resPath) {
   // fs.readFileSync返回文件的内容
 
   let fileContent = fs.readFileSync(resPath);
-  // fs.statSync 同步检查文件是否存在
+  // fs.statSync 返回statc 的文件属性，为了方便后面拿到文件的mtime
   const fileStat = fs.statSync(resPath);
   // 计算文件MD5
   // crypto 模块提供了加密功能，包含对 OpenSSL 的哈希、HMAC、加密、解密、签名、以及验证功能的一整套封装
   // crypto.createHash()方法用于创建Hash实例。Hash不能直接使用new关键字创建对象
   // 根据 data更新hash的内容,编码方式为 inputEncoding可以是 'utf8', 'ascii' 或者 'latin1'. 如果 encoding 没有传值, data 是一个字符串, 强制编码格式为'utf8'。 如果 data 是 Buffer, TypedArray, 或者 DataView, inputEncoding 会被忽略.
   // 计算所有需要被哈希化的数据摘要 (通过 hash.update() 方法)。 encoding 值可以是 'hex', 'latin1' 或者 'base64'. 如果encoding 春如的是字符串会被直接返回; 其它情况会返回一个 a Buffer.
-  const fileMd5 = crypto.createHash('md5').update(fileContent).digest('hex');
+  const fileMd5 = crypto.createHash('md5').update(fileContent).digest('hex');// hex 是指16进制
   // 计算完就清掉 buffer
   fileContent = null;
   const cacheControl = ctx.req.headers['cache-control'];
@@ -222,11 +222,12 @@ async function staticCache(ctx, resPath) {
     // if-modified-since请求头，表示客户端里缓存的资源的更新时间
     const mtime = ctx.req.headers['if-modified-since'];
 
-    const etagIsMatch = reqEtag && reqEtag.split(/* ,*/).includes(fileMd5);
+    const etagIsMatch = reqEtag && reqEtag.split(/ *,*/).includes(fileMd5);
+    // console.log(fileStat.mtime, +fileStat.mtime, +fileStat.mtime / 1000);
     const fileMTime = ~~(+fileStat.mtime / 1000);
+    // console.log(fileMTime);
     const isNotModified = mtime && (+new Date(mtime) >= fileMTime);
     isOutDated = !etagIsMatch || !isNotModified;
-    // console.log(isOutDated);
   }
   if (!isOutDated) {
     ctx.status = 304;
@@ -238,9 +239,9 @@ async function staticCache(ctx, resPath) {
 
   const fileStream = fs.createReadStream(resPath);
   // 资源压缩
-  const acceptEncoding = (ctx.req.headers['accept-encoding'] || '').split(/ * ,*/);
+  const acceptEncoding = (ctx.req.headers['accept-encoding'] || '').split(/ *,*/);
   // const acceptEncoding = (ctx.req.headers['accept-encoding'] || '').split(/ *, */);
-  console.log(acceptEncoding);
+  // console.log('hello', ctx.req.headers['accept-encoding']);
   if (acceptEncoding.includes('gzip')) {
     const gzip = zlib.createGzip();
     // const gzipContent = zlib.gzipSync(fileContent);
